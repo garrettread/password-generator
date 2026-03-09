@@ -2,54 +2,83 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from password_generator import PasswordGeneratorPage
 from storage import get_decrypted_password_match
-from credit_card_utils import validate_credit_card
+from credit_card_utils import (
+    validate_credit_card,
+    normalize_card_number,
+    detect_card_type,
+)
 from credit_card_storage import save_credit_card_record
 
 
 class HomePage(ttk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, padding=20)
+        super().__init__(parent, padding=30)
         self.controller = controller
 
+        outer = ttk.Frame(self)
+        outer.pack(expand=True)
+
         title_label = ttk.Label(
-            self,
-            text="Password Manager Project",
-            font=("Helvetica", 18, "bold")
+            outer,
+            text="RoboForm-Inspired Security Toolkit",
+            style="Hero.TLabel"
         )
-        title_label.pack(pady=(10, 20))
+        title_label.pack(pady=(5, 8))
 
         subtitle_label = ttk.Label(
-            self,
-            text="Choose an option",
-            font=("Helvetica", 11)
+            outer,
+            text="Generate passwords, test login autofill, and store payment data in one polished demo.",
+            style="SubHero.TLabel",
+            wraplength=650,
+            justify="center"
         )
-        subtitle_label.pack(pady=(0, 20))
+        subtitle_label.pack(pady=(0, 28))
+
+        card = ttk.Frame(outer, style="Card.TFrame", padding=28)
+        card.pack()
+
+        section_title = ttk.Label(
+            card,
+            text="Choose an option",
+            style="SectionTitle.TLabel"
+        )
+        section_title.pack(pady=(0, 18))
 
         generate_button = ttk.Button(
-            self,
+            card,
             text="Generate Password",
+            style="Primary.TButton",
             command=lambda: controller.show_frame("PasswordGeneratorPage")
         )
-        generate_button.pack(pady=8, ipadx=20, ipady=8)
+        generate_button.pack(fill="x", pady=8, ipady=8)
 
         autofill_button = ttk.Button(
-            self,
+            card,
             text="Login to Website with Autofill",
+            style="Primary.TButton",
             command=lambda: controller.show_frame("AutofillPage")
         )
-        autofill_button.pack(pady=8, ipadx=20, ipady=8)
+        autofill_button.pack(fill="x", pady=8, ipady=8)
 
         credit_button = ttk.Button(
-            self,
+            card,
             text="Store Credit Card",
+            style="Primary.TButton",
             command=lambda: controller.show_frame("CreditCardPage")
         )
-        credit_button.pack(pady=8, ipadx=20, ipady=8)
+        credit_button.pack(fill="x", pady=8, ipady=8)
+
+        footer = ttk.Label(
+            outer,
+            text="Demo purposes only.",
+            style="Hint.TLabel"
+        )
+        footer.pack(pady=(18, 0))
 
 
 class AutofillPage(ttk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, padding=20)
+        super().__init__(parent, padding=28)
         self.controller = controller
         self.password_visible = False
 
@@ -57,66 +86,95 @@ class AutofillPage(ttk.Frame):
         self.login_username = tk.StringVar()
         self.login_password = tk.StringVar()
 
-        title = ttk.Label(
-            self,
-            text="Mock Website Login with Autofill",
-            font=("Helvetica", 16, "bold")
+        outer = ttk.Frame(self)
+        outer.pack(fill="both", expand=True)
+
+        topbar = ttk.Frame(outer)
+        topbar.pack(fill="x", pady=(0, 10))
+
+        back_button = ttk.Button(
+            topbar,
+            text="← Back",
+            command=self.go_back
         )
-        title.grid(row=0, column=0, columnspan=3, pady=(5, 20))
+        back_button.pack(side="left")
+
+        title = ttk.Label(
+            outer,
+            text="Mock Website Login with Autofill",
+            style="PageTitle.TLabel"
+        )
+        title.pack(pady=(5, 6))
 
         instructions = ttk.Label(
-            self,
-            text="Enter a website and username. If a saved match exists, the password will autofill."
+            outer,
+            text="Enter a website and username. If a saved match exists, the password will autofill automatically.",
+            style="Body.TLabel",
+            wraplength=700,
+            justify="center"
         )
-        instructions.grid(row=1, column=0, columnspan=3, pady=(0, 15))
+        instructions.pack(pady=(0, 20))
 
-        ttk.Label(self, text="Website:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
-        self.website_entry = ttk.Entry(self, textvariable=self.website_input, width=32)
-        self.website_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        card = ttk.Frame(outer, style="Card.TFrame", padding=24)
+        card.pack(anchor="center")
 
-        ttk.Label(self, text="Username:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
-        self.username_entry = ttk.Entry(self, textvariable=self.login_username, width=32)
-        self.username_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        ttk.Label(card, text="Website", style="FieldLabel.TLabel").grid(
+            row=0, column=0, sticky="w", padx=(0, 12), pady=8
+        )
+        self.website_entry = ttk.Entry(card, textvariable=self.website_input, width=38)
+        self.website_entry.grid(row=0, column=1, sticky="w", pady=8, padx=(0, 8))
 
-        ttk.Label(self, text="Password:").grid(row=4, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(card, text="Username", style="FieldLabel.TLabel").grid(
+            row=1, column=0, sticky="w", padx=(0, 12), pady=8
+        )
+        self.username_entry = ttk.Entry(card, textvariable=self.login_username, width=38)
+        self.username_entry.grid(row=1, column=1, sticky="w", pady=8, padx=(0, 8))
+
+        ttk.Label(card, text="Password", style="FieldLabel.TLabel").grid(
+            row=2, column=0, sticky="w", padx=(0, 12), pady=8
+        )
         self.password_entry = ttk.Entry(
-            self,
+            card,
             textvariable=self.login_password,
-            width=32,
+            width=38,
             show="*"
         )
-        self.password_entry.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        self.password_entry.grid(row=2, column=1, sticky="w", pady=8, padx=(0, 8))
 
         self.toggle_password_button = ttk.Button(
-            self,
+            card,
             text="Show",
             command=self.toggle_password_visibility,
             width=8
         )
-        self.toggle_password_button.grid(row=4, column=2, padx=5, pady=5, sticky="w")
+        self.toggle_password_button.grid(row=2, column=2, sticky="w", pady=8)
+
+        button_row = ttk.Frame(card)
+        button_row.grid(row=3, column=1, columnspan=2, sticky="w", pady=(14, 0))
 
         autofill_button = ttk.Button(
-            self,
+            button_row,
             text="Autofill",
+            style="Primary.TButton",
             command=self.autofill_login
         )
-        autofill_button.grid(row=5, column=1, pady=(10, 10), sticky="w")
+        autofill_button.pack(side="left", padx=(0, 10), ipady=4)
 
         login_button = ttk.Button(
-            self,
+            button_row,
             text="Login",
             command=self.mock_login
         )
-        login_button.grid(row=6, column=1, pady=10, sticky="w")
+        login_button.pack(side="left", ipady=4)
 
-        back_button = ttk.Button(
-            self,
-            text="Back",
-            command=self.go_back
+        hint = ttk.Label(
+            outer,
+            text=None,
+            style="Hint.TLabel",
+            wraplength=720,
+            justify="center"
         )
-        back_button.grid(row=7, column=0, pady=15, sticky="w")
-
-        self.columnconfigure(1, weight=1)
+        hint.pack(pady=(16, 0))
 
     def autofill_login(self):
         website = self.website_input.get().strip()
@@ -189,7 +247,7 @@ class AutofillPage(ttk.Frame):
 
 class CreditCardPage(ttk.Frame):
     def __init__(self, parent, controller):
-        super().__init__(parent, padding=20)
+        super().__init__(parent, padding=28)
         self.controller = controller
         self.card_visible = False
         self.cvc_visible = False
@@ -201,85 +259,109 @@ class CreditCardPage(ttk.Frame):
         self.card_type_var = tk.StringVar(value="Detected Type: ")
         self.card_note_var = tk.StringVar(value="")
 
-        title = ttk.Label(
-            self,
-            text="Store Credit Card",
-            font=("Helvetica", 16, "bold")
+        outer = ttk.Frame(self)
+        outer.pack(fill="both", expand=True)
+
+        topbar = ttk.Frame(outer)
+        topbar.pack(fill="x", pady=(0, 10))
+
+        back_button = ttk.Button(
+            topbar,
+            text="← Back",
+            command=self.go_back
         )
-        title.grid(row=0, column=0, columnspan=4, pady=(5, 20))
+        back_button.pack(side="left")
+
+        title = ttk.Label(
+            outer,
+            text="Store Credit Card",
+            style="PageTitle.TLabel"
+        )
+        title.pack(pady=(5, 6))
 
         notes_label = ttk.Label(
-            self,
+            outer,
             text=(
-                "Formatting Notes:\n"
-                "- Card number must be a valid Visa, Mastercard, or American Express number\n"
-                "- Expiration must be MM/YY or MM/YYYY and cannot be expired\n"
-                "- CVC must be 3 digits for Visa/Mastercard or 4 digits for AmEx"
+                "Use demo/test card details only.\n"
+                "Accepted formats: MM/YY or MM/YYYY. Supported card types: Visa, Mastercard, American Express."
             ),
-            justify="left"
+            style="Body.TLabel",
+            justify="center",
+            wraplength=720
         )
-        notes_label.grid(row=1, column=0, columnspan=4, sticky="w", padx=5, pady=(0, 15))
+        notes_label.pack(pady=(0, 18))
 
-        ttk.Label(self, text="Cardholder Name:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
-        self.cardholder_entry = ttk.Entry(self, textvariable=self.cardholder_var, width=34)
-        self.cardholder_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        card = ttk.Frame(outer, style="Card.TFrame", padding=24)
+        card.pack(anchor="center")
 
-        ttk.Label(self, text="Card Number:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
-        self.card_number_entry = ttk.Entry(self, textvariable=self.card_number_var, width=34, show="*")
-        self.card_number_entry.grid(row=3, column=1, padx=5, pady=5, sticky="w")
+        ttk.Label(card, text="Cardholder Name", style="FieldLabel.TLabel").grid(
+            row=0, column=0, sticky="w", padx=(0, 14), pady=8
+        )
+        self.cardholder_entry = ttk.Entry(card, textvariable=self.cardholder_var, width=38)
+        self.cardholder_entry.grid(row=0, column=1, sticky="w", pady=8, padx=(0, 8))
+
+        ttk.Label(card, text="Card Number", style="FieldLabel.TLabel").grid(
+            row=1, column=0, sticky="w", padx=(0, 14), pady=8
+        )
+        self.card_number_entry = ttk.Entry(card, textvariable=self.card_number_var, width=38, show="*")
+        self.card_number_entry.grid(row=1, column=1, sticky="w", pady=8, padx=(0, 8))
 
         self.toggle_card_button = ttk.Button(
-            self,
+            card,
             text="Show",
             command=self.toggle_card_visibility,
             width=8
         )
-        self.toggle_card_button.grid(row=3, column=2, padx=5, pady=5, sticky="w")
+        self.toggle_card_button.grid(row=1, column=2, sticky="w", pady=8)
 
-        ttk.Label(self, text="Expiration:").grid(row=4, column=0, sticky="w", padx=5, pady=5)
-        self.expiration_entry = ttk.Entry(self, textvariable=self.expiration_var, width=34)
-        self.expiration_entry.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        ttk.Label(card, text="Expiration", style="FieldLabel.TLabel").grid(
+            row=2, column=0, sticky="w", padx=(0, 14), pady=8
+        )
+        self.expiration_entry = ttk.Entry(card, textvariable=self.expiration_var, width=38)
+        self.expiration_entry.grid(row=2, column=1, sticky="w", pady=8, padx=(0, 8))
 
-        ttk.Label(self, text="CVC:").grid(row=5, column=0, sticky="w", padx=5, pady=5)
-        self.cvc_entry = ttk.Entry(self, textvariable=self.cvc_var, width=34, show="*")
-        self.cvc_entry.grid(row=5, column=1, padx=5, pady=5, sticky="w")
+        ttk.Label(card, text="CVC", style="FieldLabel.TLabel").grid(
+            row=3, column=0, sticky="w", padx=(0, 14), pady=8
+        )
+        self.cvc_entry = ttk.Entry(card, textvariable=self.cvc_var, width=38, show="*")
+        self.cvc_entry.grid(row=3, column=1, sticky="w", pady=8, padx=(0, 8))
 
         self.toggle_cvc_button = ttk.Button(
-            self,
+            card,
             text="Show",
             command=self.toggle_cvc_visibility,
             width=8
         )
-        self.toggle_cvc_button.grid(row=5, column=2, padx=5, pady=5, sticky="w")
+        self.toggle_cvc_button.grid(row=3, column=2, sticky="w", pady=8)
 
-        self.card_type_label = ttk.Label(self, textvariable=self.card_type_var, font=("Helvetica", 10, "bold"))
-        self.card_type_label.grid(row=6, column=1, sticky="w", padx=5, pady=(5, 2))
+        self.card_type_label = ttk.Label(
+            card,
+            textvariable=self.card_type_var,
+            style="Detected.TLabel"
+        )
+        self.card_type_label.grid(row=4, column=1, sticky="w", pady=(8, 2))
 
-        self.card_note_label = ttk.Label(self, textvariable=self.card_note_var, foreground="gray")
-        self.card_note_label.grid(row=7, column=1, sticky="w", padx=5, pady=(0, 10))
+        self.card_note_label = ttk.Label(
+            card,
+            textvariable=self.card_note_var,
+            style="Hint.TLabel",
+            wraplength=420,
+            justify="left"
+        )
+        self.card_note_label.grid(row=5, column=1, sticky="w", pady=(0, 12))
 
         save_button = ttk.Button(
-            self,
+            card,
             text="Save Card",
+            style="Primary.TButton",
             command=self.save_card
         )
-        save_button.grid(row=8, column=1, pady=(10, 10), sticky="w")
+        save_button.grid(row=6, column=1, sticky="w", pady=(8, 0), ipady=4)
 
-        back_button = ttk.Button(
-            self,
-            text="Back",
-            command=self.go_back
-        )
-        back_button.grid(row=9, column=0, pady=15, sticky="w")
-
-        self.columnconfigure(1, weight=1)
-
-        # Live detection while typing
+        self.columnconfigure(0, weight=1)
         self.card_number_var.trace_add("write", self.update_card_type_live)
 
     def update_card_type_live(self, *args):
-        from credit_card_utils import normalize_card_number, detect_card_type
-
         raw_number = self.card_number_var.get()
         normalized_number = normalize_card_number(raw_number)
 
@@ -300,7 +382,7 @@ class CreditCardPage(ttk.Frame):
             self.card_note_var.set("Visa usually starts with 4 and uses 13, 16, or 19 digits.")
         elif card_type == "Mastercard":
             self.card_type_var.set("Detected Type: Mastercard")
-            self.card_note_var.set("Mastercard uses 16 digits and starts with 51-55 or 2221-2720.")
+            self.card_note_var.set("Mastercard uses 16 digits and starts with 51–55 or 2221–2720.")
         elif card_type == "American Express":
             self.card_type_var.set("Detected Type: American Express")
             self.card_note_var.set("American Express uses 15 digits and a 4-digit CVC.")
@@ -393,9 +475,12 @@ class PasswordManagerApp(tk.Tk):
         super().__init__()
 
         self.title("PasswordGenerator")
-        self.geometry("850x480")
+        self.geometry("920x580")
+        self.minsize(860, 540)
 
-        container = ttk.Frame(self)
+        self._setup_styles()
+
+        container = ttk.Frame(self, padding=8)
         container.pack(fill="both", expand=True)
 
         container.grid_rowconfigure(0, weight=1)
@@ -410,6 +495,81 @@ class PasswordManagerApp(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
 
         self.show_frame("HomePage")
+
+    def _setup_styles(self):
+        style = ttk.Style(self)
+        style.theme_use("clam")
+
+        self.configure(bg="#f4f5f7")
+
+        style.configure("TFrame", background="#f4f5f7")
+        style.configure("Card.TFrame", background="#ffffff", relief="flat")
+
+        style.configure(
+            "Hero.TLabel",
+            background="#f4f5f7",
+            foreground="#222222",
+            font=("Helvetica", 24, "bold")
+        )
+        style.configure(
+            "SubHero.TLabel",
+            background="#f4f5f7",
+            foreground="#5a5f69",
+            font=("Helvetica", 11)
+        )
+        style.configure(
+            "PageTitle.TLabel",
+            background="#f4f5f7",
+            foreground="#222222",
+            font=("Helvetica", 20, "bold")
+        )
+        style.configure(
+            "SectionTitle.TLabel",
+            background="#ffffff",
+            foreground="#222222",
+            font=("Helvetica", 14, "bold")
+        )
+        style.configure(
+            "Body.TLabel",
+            background="#f4f5f7",
+            foreground="#4f5560",
+            font=("Helvetica", 11)
+        )
+        style.configure(
+            "FieldLabel.TLabel",
+            background="#ffffff",
+            foreground="#222222",
+            font=("Helvetica", 10, "bold")
+        )
+        style.configure(
+            "Hint.TLabel",
+            background="#f4f5f7",
+            foreground="#6b7280",
+            font=("Helvetica", 9)
+        )
+        style.configure(
+            "Detected.TLabel",
+            background="#ffffff",
+            foreground="#2f6f3e",
+            font=("Helvetica", 10, "bold")
+        )
+
+        style.configure(
+            "TButton",
+            font=("Helvetica", 10),
+            padding=(12, 8)
+        )
+        style.configure(
+            "Primary.TButton",
+            font=("Helvetica", 10, "bold"),
+            padding=(14, 9)
+        )
+
+        style.configure(
+            "TEntry",
+            fieldbackground="#ffffff",
+            padding=6
+        )
 
     def show_frame(self, page_name):
         frame = self.frames[page_name]
