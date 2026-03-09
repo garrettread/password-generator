@@ -1,0 +1,14 @@
+# Secret key
+secret.key
+
+# Stored password data
+passwords_plain.json
+passwords_encrypted.json
+
+# Stored credit card data
+credit_cards_plain.json
+credit_cards_encrypted.json
+
+# Python cache
+__pycache__/
+*.pyc
