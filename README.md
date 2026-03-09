@@ -20,7 +20,7 @@ A RoboForm-like tkinter app built with Python.
 
 Clone the repo and move into the project folder:
 
-git clone <your-repo-url>
+git clone
 cd password-generator
 
 install:
