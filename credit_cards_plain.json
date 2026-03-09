@@ -1,0 +1,18 @@
+[
+    {
+        "id": "f20674de-6b18-4551-a702-14088f946329",
+        "cardholder": "test person",
+        "card_type": "Visa",
+        "card_number": "4111111111111111",
+        "expiration": "05/2029",
+        "cvc": "321"
+    },
+    {
+        "id": "ed892766-064a-4e2e-b6bd-93a88f768517",
+        "cardholder": "test test1",
+        "card_type": "Mastercard",
+        "card_number": "5555555555554444",
+        "expiration": "05/29",
+        "cvc": "321"
+    }
+]

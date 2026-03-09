@@ -1,0 +1,39 @@
+Visa
+
+Cardholder: first last
+Card Number: 4111 1111 1111 1111
+Expiration: 12/2028
+CVC: 123
+
+Cardholder: first last
+Card Number: 4012 8888 8888 1881
+Expiration: 08/2027
+CVC: 456
+
+------------------------
+
+Mastercard
+
+Cardholder: first last
+Card Number: 5555 5555 5555 4444
+Expiration: 05/2029
+CVC: 321
+
+Cardholder: first last
+Card Number: 5105 1051 0510 5100
+Expiration: 09/2028
+CVC: 111
+
+-----------------------
+
+AmEx
+
+Cardholder: first last
+Card Number: 3782 822463 10005
+Expiration: 07/2027
+CVC: 1234
+
+Cardholder: first last
+Card Number: 3714 496353 98431
+Expiration: 11/2029
+CVC: 9999
